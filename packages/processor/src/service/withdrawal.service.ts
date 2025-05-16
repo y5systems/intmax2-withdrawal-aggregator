@@ -57,6 +57,7 @@ const submitWithdrawalProofToScroll = async (
   gnarkProof: GnarkProof,
   walletClientData: ReturnType<typeof getWalletClient>,
 ) => {
+  // logger.info({ withdrawalProofs }, "withdrawalProofs");
   const lastWithdrawalHash = getLastWithdrawalHashFromWithdrawalProofs(withdrawalProofs);
   const withdrawalAggregator = walletClientData.account.address;
 

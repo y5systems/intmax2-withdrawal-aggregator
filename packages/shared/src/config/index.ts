@@ -31,6 +31,7 @@ export const config = cleanEnv(process.env, {
   LIQUIDITY_CONTRACT_ADDRESS: str({ devDefault: "0x" }),
   LIQUIDITY_CONTRACT_DEPLOYED_BLOCK_NUMBER: num({ devDefault: 0 }),
   WITHDRAWAL_CONTRACT_ADDRESS: str({ devDefault: "0x" }),
+  SCROLL_SEPOLIA_RELAYER_CONTRACT_ADDRESS: str({ devDefault: "0x" }),
   // private key
   INTMAX2_OWNER_MNEMONIC: str(),
   INTMAX2_OWNER_PRIVATE_KEY: str(),

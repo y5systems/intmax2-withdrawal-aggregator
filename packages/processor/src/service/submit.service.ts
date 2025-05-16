@@ -3,6 +3,7 @@ import {
   type ContractCallParameters,
   type RetryOptionsEthers,
   WithdrawalAbi,
+  LzRelayAbi,
   Withdrawal__factory,
   calculateEthersIncreasedGasPrice,
   calculateGasMultiplier,
@@ -109,6 +110,9 @@ export const submitWithdrawalProofWithRetry = async (
     args: [params.contractWithdrawals, params.publicInputs, params.proof, DST_EID, options],
   };
 
+  logger.info(`service hash: ${params.publicInputs.lastWithdrawalHash}`);
+  
+
   const [{ pendingNonce, currentNonce }, gasPriceData] = await Promise.all([
     getNonce(ethereumClient, walletClientData.account.address),
     getEthersMaxGasMultiplier(ethereumClient, multiplier),
@@ -128,7 +132,6 @@ export const submitWithdrawalProofWithRetry = async (
   const contractCallOptions: ContractCallOptionsEthers = {
     nonce: currentNonce,
     gasPrice,
-    value: BigInt(MSG_VALUE),
   };
 
   const provider = new ethers.JsonRpcProvider(ethereumClient.transport.url);
@@ -137,7 +140,33 @@ export const submitWithdrawalProofWithRetry = async (
   const signer = new ethers.Wallet(config.INTMAX2_OWNER_PRIVATE_KEY, provider);
   const contract = Withdrawal__factory.connect(contractCallParams.contractAddress, signer);
 
-  const ethersTxOptions = getEthersTxOptions(contractCallParams, contractCallOptions ?? {});
+  const lzRelayer = new ethers.Contract(config.SCROLL_SEPOLIA_RELAYER_CONTRACT_ADDRESS!, LzRelayAbi, signer);
+
+  const withdrawalTuples = params.contractWithdrawals.map(w => [
+    w.recipient,
+    w.tokenIndex,
+    w.amount,
+    w.nullifier,
+    w.blockHash,
+    w.blockNumber
+  ]);
+
+  const abiCoder = new ethers.AbiCoder()
+  const payload = abiCoder.encode(
+    ["tuple(address,uint32,uint256,bytes32,bytes32,uint32)[]", "tuple(bytes32,address)", "bytes", "uint32", "bytes"],
+    [
+      withdrawalTuples,
+      [params.publicInputs.lastWithdrawalHash, params.publicInputs.withdrawalAggregator],
+      params.proof,
+      DST_EID,
+      options,
+    ]
+  )
+
+  const fee = await lzRelayer.quote(DST_EID, payload, options, false);
+  console.log("Estimated fee:", fee.nativeFee.toString())
+
+  const ethersTxOptions = getEthersTxOptions(contractCallParams, contractCallOptions ?? { value: fee.nativeFee, gasLimit: GAS_LIMIT });
   const callArgs = [
     contractCallParams.args[0],
     contractCallParams.args[1],
