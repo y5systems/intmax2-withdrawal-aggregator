@@ -16,11 +16,14 @@
   },
   "scripts": {
     "build": "rm -rf dist tsconfig.tsbuildinfo && tsc",
+    "generate": "typechain --target ethers-v6 --out-dir ./src/typechainTypes './src/abi/*.json'",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@typechain/ethers-v6": "^0.5.1",
     "@types/bull": "^4.10.4",
     "@types/pg": "^8",
+    "typechain": "^8.3.2",
     "typescript": "^5.8.3"
   }
 }

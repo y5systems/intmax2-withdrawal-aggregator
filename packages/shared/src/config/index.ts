@@ -33,6 +33,7 @@ export const config = cleanEnv(process.env, {
   WITHDRAWAL_CONTRACT_ADDRESS: str({ devDefault: "0x" }),
   // private key
   INTMAX2_OWNER_MNEMONIC: str(),
+  INTMAX2_OWNER_PRIVATE_KEY: str(),
   // zkp
   ZKP_PROVER_URL: str({ default: "http://localhost:3001" }),
   // queue

@@ -18,7 +18,7 @@ import {
   replacedEthersTransaction,
 } from "@intmax2-withdrawal-aggregator/shared";
 import { ethers } from "ethers";
-import { type Abi, type PublicClient, toHex } from "viem";
+import { type Abi, type PublicClient } from "viem";
 import {
   ETHERS_CONFIRMATIONS,
   ETHERS_WAIT_TRANSACTION_TIMEOUT_MESSAGE,
@@ -26,8 +26,12 @@ import {
   TRANSACTION_MISSING_REVERT_DATA,
   TRANSACTION_REPLACEMENT_FEE_TOO_LOW,
   WAIT_TRANSACTION_TIMEOUT,
+  GAS_LIMIT,
+  MSG_VALUE,
+  DST_EID,
 } from "../constants";
 import type { SubmitWithdrawalParams } from "../types";
+import { Options } from '@layerzerolabs/lz-v2-utilities';
 
 export const submitWithdrawalProof = async (
   params: SubmitWithdrawalParams,
@@ -93,12 +97,16 @@ export const submitWithdrawalProofWithRetry = async (
   multiplier: number,
   retryOptions: RetryOptionsEthers,
 ) => {
+  const options = Options.newOptions()
+    .addExecutorLzReceiveOption(GAS_LIMIT, MSG_VALUE)
+    .toBytes();
+
   const contractCallParams: ContractCallParameters = {
     contractAddress: config.WITHDRAWAL_CONTRACT_ADDRESS as `0x${string}`,
     abi: WithdrawalAbi as Abi,
-    functionName: "submitWithdrawalProof",
+    functionName: "submitWithdrawalProof((address,uint32,uint256,bytes32,bytes32,uint32)[],(bytes32,address),bytes,uint32,bytes)",
     account: walletClientData.account,
-    args: [params.contractWithdrawals, params.publicInputs, params.proof],
+    args: [params.contractWithdrawals, params.publicInputs, params.proof, DST_EID, options],
   };
 
   const [{ pendingNonce, currentNonce }, gasPriceData] = await Promise.all([
@@ -120,13 +128,13 @@ export const submitWithdrawalProofWithRetry = async (
   const contractCallOptions: ContractCallOptionsEthers = {
     nonce: currentNonce,
     gasPrice,
+    value: BigInt(MSG_VALUE),
   };
 
   const provider = new ethers.JsonRpcProvider(ethereumClient.transport.url);
-  const signer = new ethers.Wallet(
-    toHex(walletClientData.account.getHdKey().privateKey!),
-    provider,
-  );
+  
+  // ToDo: make this also work with mnemonic
+  const signer = new ethers.Wallet(config.INTMAX2_OWNER_PRIVATE_KEY, provider);
   const contract = Withdrawal__factory.connect(contractCallParams.contractAddress, signer);
 
   const ethersTxOptions = getEthersTxOptions(contractCallParams, contractCallOptions ?? {});
@@ -134,6 +142,8 @@ export const submitWithdrawalProofWithRetry = async (
     contractCallParams.args[0],
     contractCallParams.args[1],
     contractCallParams.args[2],
+    contractCallParams.args[3],
+    contractCallParams.args[4],
     ethersTxOptions,
   ];
 

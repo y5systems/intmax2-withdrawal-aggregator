@@ -1,7 +1,13 @@
 import type { PollOptions } from "./types";
+import { EndpointId } from '@layerzerolabs/lz-definitions';
 
 // id
 export const DEFAULT_ID_LENGTH = 20;
+
+// LayerZero
+export const GAS_LIMIT = 10_000_000;
+export const MSG_VALUE = 0;
+export const DST_EID = EndpointId.BASESEP_V2_TESTNET;
 
 // poll
 export const DEFAULT_POLL_OPTIONS: Required<PollOptions> = {
