@@ -1,5 +1,5 @@
 import { http, type Chain, type PublicClient, createPublicClient } from "viem";
-import { mainnet, scroll, scrollSepolia, sepolia } from "viem/chains";
+import { mainnet, scroll, scrollSepolia, sepolia, baseSepolia, base } from "viem/chains";
 import { config } from "../config";
 
 export const networkConfig = {
@@ -23,9 +23,19 @@ export const networkConfig = {
       rpcUrl: `https://scroll-sepolia.g.alchemy.com/v2/${config.ALCHEMY_API_KEY}`,
     },
   },
+  base: {
+    mainnet: {
+      chain: base,
+      rpcUrl: `https://scroll-mainnet.g.alchemy.com/v2/${config.ALCHEMY_API_KEY}`,
+    },
+    sepolia: {
+      chain: baseSepolia,
+      rpcUrl: `https://base-sepolia.g.alchemy.com/v2/${config.ALCHEMY_API_KEY}`,
+    },
+  },
 };
 
-export const createNetworkClient = (network: "ethereum" | "scroll") => {
+export const createNetworkClient = (network: "base" | "scroll") => {
   const { chain, rpcUrl } = networkConfig[network][config.NETWORK_ENVIRONMENT];
 
   return createPublicClient({
